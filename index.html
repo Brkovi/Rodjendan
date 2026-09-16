@@ -3,25 +3,284 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>raddar.rs</title>
+<title>Srećan rođendan!</title>
+<meta name="description" content="Da ti se ispune sve želje počevši od ove aplikacije!">
+<meta name="theme-color" content="#FBF6F4">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Srećan rođendan!">
+<meta property="og:description" content="Da ti se ispune sve želje počevši od ove aplikacije!">
+<meta property="og:url" content="https://raddar.rs/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%89%3C/text%3E%3C/svg%3E">
 <style>
-  :root { --bg:#FBF6F4; --ink:#2A1D25; --ink-2:#75606B; --primary:#7A2E52; }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; min-height: 100vh;
-    display: grid; place-items: center;
-    padding: 24px; background: var(--bg); color: var(--ink);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    text-align: center;
+  :root {
+    /* Raddar paleta — preuzeta iz prototipa */
+    --bg: #FBF6F4;
+    --ink: #2A1D25;
+    --ink-2: #75606B;
+    --primary: #7A2E52;      /* mulberry */
+    --accent: #B9852A;       /* champagne gold */
+    --success: #3C7A62;      /* sage */
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
-  h1 { margin: 0 0 12px; font-size: clamp(28px, 7vw, 44px); color: var(--primary); letter-spacing: -.02em; }
-  p  { margin: 0; color: var(--ink-2); font-size: 17px; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100svh;
+    display: grid;
+    place-items: center;
+    padding: 32px 20px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    text-align: center;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .ribbons {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: min(46vh, 380px);
+    pointer-events: none; z-index: 1;
+  }
+  .ribbons path {
+    fill: none; stroke-linecap: round;
+    transform-box: fill-box; transform-origin: 50% 0%;
+  }
+
+  #confetti {
+    position: fixed; inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none; z-index: 3;
+  }
+
+  main {
+    position: relative; z-index: 2;
+    max-width: min(680px, 100%);
+    opacity: 0; transform: translateY(14px);
+    animation: rise .9s cubic-bezier(.2,.7,.2,1) .4s forwards;
+  }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+
+  h1 {
+    margin: 0 0 20px;
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(42px, 12vw, 104px);
+    line-height: 1.03;
+    letter-spacing: -.025em;
+    color: var(--primary);
+    text-wrap: balance;
+  }
+  p {
+    margin: 0 auto;
+    max-width: 30ch;
+    font-size: clamp(16px, 4.2vw, 21px);
+    line-height: 1.5;
+    color: var(--ink-2);
+    text-wrap: balance;
+  }
+
+  @keyframes sway {
+    0%, 100% { transform: rotate(-2.2deg); }
+    50%      { transform: rotate(2.2deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    main { animation: none; opacity: 1; transform: none; }
+    .ribbons path { animation: none !important; stroke-dashoffset: 0 !important; }
+  }
 </style>
 </head>
 <body>
-  <main>
-    <h1>raddar.rs</h1>
-    <p>Uskoro.</p>
-  </main>
+
+<svg class="ribbons" id="ribbons" aria-hidden="true" preserveAspectRatio="xMidYMin slice"></svg>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<main>
+  <h1>Srećan rođendan!</h1>
+  <p>Da ti se ispune sve želje počevši od ove aplikacije!</p>
+</main>
+
+<script>
+(function () {
+  var REDUCED = window.matchMedia &&
+                window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var CONFETTI = ['#7A2E52', '#B9852A', '#3C7A62', '#8A2F5B', '#DAC6C1', '#F4E2EC', '#F6EBD3'];
+  var RIBBON   = ['#7A2E52', '#B9852A', '#3C7A62', '#8A2F5B', '#DAC6C1'];
+
+  /* ---------- trake ---------- */
+  var svg = document.getElementById('ribbons');
+
+  function ribbonPath(x, len) {
+    var d = 'M ' + x + ' 0', y = 0,
+        dir = Math.random() < .5 ? 1 : -1,
+        amp = 13 + Math.random() * 17,
+        seg = 42;
+    while (y < len) {
+      var ny = Math.min(y + seg, len);
+      d += ' Q ' + (x + dir * amp) + ' ' + ((y + ny) / 2) + ' ' + x + ' ' + ny;
+      dir *= -1; y = ny;
+    }
+    return d;
+  }
+
+  function drawRibbons(animate) {
+    var w = window.innerWidth,
+        h = Math.min(window.innerHeight * .46, 380),
+        n = Math.max(5, Math.min(11, Math.round(w / 135)));
+
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    for (var i = 0; i < n; i++) {
+      var x   = (w / n) * (i + .5) + (Math.random() - .5) * (w / n) * .55,
+          len = h * (.42 + Math.random() * .5),
+          p   = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+
+      p.setAttribute('d', ribbonPath(x, len));
+      p.setAttribute('stroke', RIBBON[i % RIBBON.length]);
+      p.setAttribute('stroke-width', (3 + Math.random() * 3).toFixed(1));
+      p.setAttribute('opacity', (.55 + Math.random() * .35).toFixed(2));
+      svg.appendChild(p);
+
+      if (animate && !REDUCED) {
+        var L = p.getTotalLength();
+        p.style.strokeDasharray  = L;
+        p.style.strokeDashoffset = L;
+        p.style.transition = 'stroke-dashoffset .95s cubic-bezier(.2,.75,.25,1) ' +
+                             (i * .07).toFixed(2) + 's';
+        /* jedan frame da se transition zakači */
+        (function (el) { requestAnimationFrame(function () {
+          requestAnimationFrame(function () { el.style.strokeDashoffset = 0; });
+        }); })(p);
+      }
+      if (!REDUCED) {
+        p.style.animation = 'sway ' + (3.6 + Math.random() * 2.4).toFixed(2) +
+                            's ease-in-out ' + (Math.random() * 2).toFixed(2) +
+                            's infinite';
+      }
+    }
+  }
+
+  drawRibbons(true);
+
+  /* ---------- konfete ---------- */
+  var canvas = document.getElementById('confetti'),
+      ctx = canvas.getContext('2d'),
+      P = [], W = 0, H = 0, running = false, last = 0;
+
+  function resize() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = canvas.clientWidth; H = canvas.clientHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+
+  function piece(o) {
+    return {
+      x: o.x, y: o.y,
+      vx: o.vx, vy: o.vy, g: o.g,
+      w: 5 + Math.random() * 7,
+      h: 8 + Math.random() * 12,
+      color: CONFETTI[(Math.random() * CONFETTI.length) | 0],
+      rot: Math.random() * Math.PI * 2,
+      vr: (Math.random() - .5) * .25,
+      phase: Math.random() * Math.PI * 2,
+      wob: .9 + Math.random() * 1.9,
+      amp: 10 + Math.random() * 26
+    };
+  }
+
+  function rain(n) {
+    if (P.length > 340) return;
+    for (var i = 0; i < n; i++) P.push(piece({
+      x: Math.random() * W,
+      y: -24 - Math.random() * H * .85,
+      vx: (Math.random() - .5) * 34,
+      vy: 60 + Math.random() * 95,
+      g: 10
+    }));
+  }
+
+  function burst(cx, cy, n) {
+    if (P.length > 380) return;
+    for (var i = 0; i < n; i++) {
+      var a = Math.random() * Math.PI * 2,
+          s = 190 + Math.random() * 330;
+      P.push(piece({
+        x: cx, y: cy,
+        vx: Math.cos(a) * s,
+        vy: Math.sin(a) * s - 130,
+        g: 560
+      }));
+    }
+  }
+
+  function frame(t) {
+    if (!last) last = t;
+    var dt = Math.min((t - last) / 1000, .05);
+    last = t;
+
+    ctx.clearRect(0, 0, W, H);
+
+    for (var i = P.length - 1; i >= 0; i--) {
+      var p = P[i];
+      p.vy += p.g * dt;
+      p.phase += p.wob * dt;
+      p.y += p.vy * dt;
+      p.x += (p.vx + Math.sin(p.phase) * p.amp) * dt;
+      p.rot += p.vr * dt * 60;
+
+      if (p.y - p.h > H + 30) { P.splice(i, 1); continue; }
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.scale(Math.cos(p.phase), 1);   /* lepršanje */
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    }
+
+    if (P.length) requestAnimationFrame(frame);
+    else { running = false; last = 0; }
+  }
+
+  function start() {
+    if (running) return;
+    running = true; last = 0;
+    requestAnimationFrame(frame);
+  }
+
+  if (!REDUCED) {
+    rain(95);
+    start();
+
+    setTimeout(function () { burst(W / 2, H * .42, 80); start(); }, 700);
+
+    /* kratko dosipanje pa se smiri */
+    var trickle = setInterval(function () { rain(3); start(); }, 420);
+    setTimeout(function () { clearInterval(trickle); }, 6500);
+
+    /* dodirni bilo gde za još */
+    window.addEventListener('pointerdown', function (e) {
+      burst(e.clientX, e.clientY, 55);
+      start();
+    });
+  }
+
+  var rt;
+  window.addEventListener('resize', function () {
+    clearTimeout(rt);
+    rt = setTimeout(function () { resize(); drawRibbons(false); }, 180);
+  });
+})();
+</script>
 </body>
 </html>
