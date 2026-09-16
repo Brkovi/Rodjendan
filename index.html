@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Srećan rođendan!</title>
 <meta name="description" content="Da ti se ispune sve želje počevši od ove aplikacije!">
-<meta name="theme-color" content="#FBF6F4">
+<meta name="theme-color" content="#F3E8DB">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Srećan rođendan!">
 <meta property="og:description" content="Da ti se ispune sve želje počevši od ove aplikacije!">
@@ -15,7 +15,7 @@
 <style>
   :root {
     /* Raddar paleta — preuzeta iz prototipa */
-    --bg: #FBF6F4;
+    --bg: #F3E8DB;         /* topliji bež */
     --ink: #2A1D25;
     --ink-2: #75606B;
     --primary: #7A2E52;      /* mulberry */
@@ -84,18 +84,61 @@
     text-wrap: balance;
   }
 
+  .popper {
+    position: fixed;
+    bottom: clamp(38px, 14vh, 130px);
+    width: clamp(92px, 17vw, 182px);
+    aspect-ratio: 1 / 1;
+    color: var(--primary);
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    animation: pop .85s cubic-bezier(.2,.8,.25,1) .9s forwards;
+  }
+  .popper-l { left:  clamp(6px, 4vw, 72px); }
+  .popper-r { right: clamp(6px, 4vw, 72px); }
+  .popper-r use { transform: scaleX(-1); transform-origin: 50% 50%; }
+  @keyframes pop {
+    0%   { opacity: 0; transform: scale(.72) rotate(-9deg); }
+    100% { opacity: 1; transform: none; }
+  }
+
   @keyframes sway {
     0%, 100% { transform: rotate(-2.2deg); }
     50%      { transform: rotate(2.2deg); }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    main { animation: none; opacity: 1; transform: none; }
+    main, .popper { animation: none; opacity: 1; transform: none; }
     .ribbons path { animation: none !important; stroke-dashoffset: 0 !important; }
   }
 </style>
 </head>
 <body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="popper" viewBox="0 0 100 100">
+    <path d="M6 95 L41 54 Q51 58 55 71 Z" fill="currentColor" fill-opacity=".12"
+          stroke="currentColor" stroke-width="3.2" stroke-linejoin="round"/>
+    <path d="M21 80 L35 66" stroke="currentColor" stroke-width="2.4"
+          stroke-linecap="round" opacity=".4"/>
+    <path d="M53 47 Q61 29 55 15" fill="none" stroke="#B9852A"
+          stroke-width="3" stroke-linecap="round"/>
+    <path d="M65 59 Q80 53 93 59" fill="none" stroke="#3C7A62"
+          stroke-width="3" stroke-linecap="round"/>
+    <path d="M61 45 Q77 33 89 35" fill="none" stroke="#8A2F5B"
+          stroke-width="2.8" stroke-linecap="round" opacity=".65"/>
+    <rect x="69" y="19" width="7" height="9" rx="1.6" fill="#B9852A"
+          transform="rotate(24 72.5 23.5)"/>
+    <rect x="85" y="71" width="6" height="8" rx="1.6" fill="#7A2E52"
+          transform="rotate(-18 88 75)"/>
+    <circle cx="43" cy="21" r="3.2" fill="#3C7A62"/>
+    <circle cx="82" cy="45" r="2.5" fill="#C9AEA6"/>
+  </symbol>
+</svg>
+
+<svg class="popper popper-l" aria-hidden="true"><use href="#popper"/></svg>
+<svg class="popper popper-r" aria-hidden="true"><use href="#popper"/></svg>
 
 <svg class="ribbons" id="ribbons" aria-hidden="true" preserveAspectRatio="xMidYMin slice"></svg>
 <canvas id="confetti" aria-hidden="true"></canvas>
@@ -110,8 +153,8 @@
   var REDUCED = window.matchMedia &&
                 window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  var CONFETTI = ['#7A2E52', '#B9852A', '#3C7A62', '#8A2F5B', '#DAC6C1', '#F4E2EC', '#F6EBD3'];
-  var RIBBON   = ['#7A2E52', '#B9852A', '#3C7A62', '#8A2F5B', '#DAC6C1'];
+  var CONFETTI = ['#7A2E52', '#611F41', '#B9852A', '#3C7A62', '#8A2F5B', '#C9AEA6'];
+  var RIBBON   = ['#7A2E52', '#B9852A', '#3C7A62', '#8A2F5B', '#C9AEA6'];
 
   /* ---------- trake ---------- */
   var svg = document.getElementById('ribbons');
