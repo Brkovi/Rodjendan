@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="sr"><head><meta charset="utf-8">
+<style>
+  html,body{margin:0;padding:0;width:1200px;height:630px;overflow:hidden;background:#F3E8DB}
+  svg{display:block;width:1200px;height:630px}
+</style></head>
+<body>
+<svg id="w" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+  var BLOOM = ['#7A2E52', '#8A2F5B', '#A8506F', '#C2738D', '#C9AEA6', '#E6D9D4'];
+  var LEAFC = ['#3C7A62', '#4E8A70', '#65997F', '#2F6350'];
+  var BERRY = ['#611F41', '#8A2F5B', '#B9852A'];
+  var GOLD  = '#B9852A';
+  function pick(a) { return a[(Math.random() * a.length) | 0]; }
+
+  function fBloom(col, r) {
+    var g = '', n = 5, i;
+    for (i = 0; i < n; i++) {
+      g += '<path d="M0 0 C ' + (-r * .30) + ' ' + (-r * .36) + ' ' + (-r * .26) + ' ' + (-r * .82) +
+           ' 0 ' + (-r) + ' C ' + (r * .26) + ' ' + (-r * .82) + ' ' + (r * .30) + ' ' + (-r * .36) +
+           ' 0 0 Z" fill="' + col + '" transform="rotate(' + (i * 360 / n) + ')"/>';
+    }
+    return g + '<circle r="' + (r * .17).toFixed(1) + '" fill="' + GOLD + '"/>';
+  }
+
+  function fLeaf(col, L) {
+    return '<path d="M0 0 C ' + (L * .30) + ' ' + (-L * .26) + ' ' + (L * .30) + ' ' + (-L * .72) +
+           ' 0 ' + (-L) + ' C ' + (-L * .30) + ' ' + (-L * .72) + ' ' + (-L * .30) + ' ' + (-L * .26) +
+           ' 0 0 Z" fill="' + col + '"/>' +
+           '<path d="M0 0 L 0 ' + (-L * .9) + '" stroke="rgba(255,255,255,.3)" fill="none" stroke-width="' +
+           (L * .05).toFixed(2) + '"/>';
+  }
+
+  function fSprig(col, L) {
+    var g = '<path d="M0 0 Q ' + (L * .1) + ' ' + (-L * .5) + ' 0 ' + (-L) + '" stroke="' + col +
+            '" stroke-width="' + (L * .035).toFixed(2) + '" fill="none" stroke-linecap="round"/>',
+        n = 5 + ((Math.random() * 3) | 0), i;
+    for (i = 1; i <= n; i++) {
+      var t = i / (n + 1), y = -L * t, sz = L * .26 * (1 - t * .45);
+      g += '<g transform="translate(0 ' + y.toFixed(1) + ')">' +
+           '<path d="M0 0 C ' + (sz * .5) + ' ' + (-sz * .3) + ' ' + sz + ' ' + (-sz * .2) + ' ' + (sz * 1.1) +
+           ' ' + (sz * .18) + ' C ' + (sz * .6) + ' ' + (sz * .3) + ' ' + (sz * .2) + ' ' + (sz * .2) +
+           ' 0 0 Z" fill="' + col + '"/>' +
+           '<path d="M0 0 C ' + (-sz * .5) + ' ' + (-sz * .3) + ' ' + (-sz) + ' ' + (-sz * .2) + ' ' + (-sz * 1.1) +
+           ' ' + (sz * .18) + ' C ' + (-sz * .6) + ' ' + (sz * .3) + ' ' + (-sz * .2) + ' ' + (sz * .2) +
+           ' 0 0 Z" fill="' + col + '"/></g>';
+    }
+    return g;
+  }
+
+  function fBerry(col, L) {
+    var g = '<path d="M0 0 Q ' + (L * .12) + ' ' + (-L * .4) + ' 0 ' + (-L * .72) + '" stroke="#4E8A70" fill="none" stroke-width="' +
+            (L * .05).toFixed(2) + '" stroke-linecap="round"/>',
+        n = 2 + ((Math.random() * 3) | 0), i;
+    for (i = 0; i < n; i++) {
+      g += '<ellipse cx="' + ((Math.random() - .5) * L * .5).toFixed(1) + '" cy="' +
+           (-L * (.45 + Math.random() * .5)).toFixed(1) + '" rx="' + (L * .12).toFixed(1) +
+           '" ry="' + (L * .15).toFixed(1) + '" fill="' + col + '"/>';
+    }
+    return g;
+  }
+
+  function fBud(col, L) {
+    return '<path d="M0 0 L 0 ' + (-L * .55) + '" stroke="#4E8A70" fill="none" stroke-width="' +
+           (L * .055).toFixed(2) + '" stroke-linecap="round"/>' +
+           '<path d="M0 ' + (-L * .5) + ' C ' + (L * .2) + ' ' + (-L * .62) + ' ' + (L * .18) + ' ' + (-L * .95) +
+           ' 0 ' + (-L) + ' C ' + (-L * .18) + ' ' + (-L * .95) + ' ' + (-L * .2) + ' ' + (-L * .62) +
+           ' 0 ' + (-L * .5) + ' Z" fill="' + col + '"/>';
+  }
+
+
+  var svg = document.getElementById('w'), out = [];
+  var CX = 600, CY = 315, RX = 392, RY = 214;
+
+  function put(x, y, R, el, minR) {
+    /* ostavi sredinu praznu */
+    var nx = (x - CX) / 208, ny = (y - CY) / 132;
+    if (nx * nx + ny * ny < 1) return;
+    if (x < -R || x > 1200 + R || y < -R || y > 630 + R) return;
+    out.push('<g transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' +
+             ((Math.random() * 360) | 0) + ') scale(' + (.95 + Math.random() * .45).toFixed(2) + ')">' +
+             el + '</g>');
+  }
+
+  /* grozdovi po elipsi */
+  var N = 32;
+  for (var i = 0; i < N; i++) {
+    var a = (i / N) * Math.PI * 2 + Math.random() * .12,
+        rx = RX * (.94 + Math.random() * .22), ry = RY * (.94 + Math.random() * .26),
+        ax = CX + Math.cos(a) * rx, ay = CY + Math.sin(a) * ry,
+        Rm = 26 + Math.random() * 17;
+    put(ax, ay, Rm, fBloom(pick(BLOOM), Rm));
+
+    var k, n = 5 + ((Math.random() * 4) | 0);
+    for (k = 0; k < n; k++) {
+      var ang = Math.random() * Math.PI * 2, rad = 40 + Math.random() * 62,
+          x = ax + Math.cos(ang) * rad, y = ay + Math.sin(ang) * rad,
+          r = Math.random(), R, el;
+      if      (r < .20) { R = 11 + Math.random() * 11; el = fBloom(pick(BLOOM), R); }
+      else if (r < .46) { R = 26 + Math.random() * 24; el = fLeaf(pick(LEAFC), R); }
+      else if (r < .75) { R = 38 + Math.random() * 32; el = fSprig(pick(LEAFC), R); }
+      else if (r < .90) { R = 26 + Math.random() * 20; el = fBerry(pick(BERRY), R); }
+      else              { R = 22 + Math.random() * 16; el = fBud(pick(BLOOM), R); }
+      put(x, y, R, el);
+    }
+  }
+
+  /* punjenje uglova, da venac ne pliva u praznini */
+  for (var c = 0; c < 4; c++) {
+    var cx0 = (c % 2) * 1200, cy0 = ((c / 2) | 0) * 630, j;
+    for (j = 0; j < 12; j++) {
+      var px = cx0 + (c % 2 ? -1 : 1) * Math.pow(Math.random(), .8) * 300,
+          py = cy0 + ((c / 2) | 0 ? -1 : 1) * Math.pow(Math.random(), .8) * 190,
+          r2 = Math.random(), R2, el2;
+      if      (r2 < .30) { R2 = 10 + Math.random() * 12; el2 = fBloom(pick(BLOOM), R2); }
+      else if (r2 < .66) { R2 = 22 + Math.random() * 20; el2 = fLeaf(pick(LEAFC), R2); }
+      else               { R2 = 32 + Math.random() * 26; el2 = fSprig(pick(LEAFC), R2); }
+      put(px, py, R2, el2);
+    }
+  }
+
+  svg.innerHTML = out.join('');
+</script>
+</body></html>
