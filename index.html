@@ -41,6 +41,20 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  .garden {
+    position: fixed; inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+  }
+  .garden .b {
+    opacity: 0; transform-origin: 0 0;
+    animation: bloom .85s cubic-bezier(.2,.8,.25,1) forwards;
+  }
+  @keyframes bloom {
+    from { opacity: 0; transform: scale(.72); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
   .ribbons {
     position: fixed; top: 0; left: 0;
     width: 100%; height: min(46vh, 380px);
@@ -84,61 +98,21 @@
     text-wrap: balance;
   }
 
-  .popper {
-    position: fixed;
-    bottom: clamp(38px, 14vh, 130px);
-    width: clamp(92px, 17vw, 182px);
-    aspect-ratio: 1 / 1;
-    color: var(--primary);
-    pointer-events: none;
-    z-index: 2;
-    opacity: 0;
-    animation: pop .85s cubic-bezier(.2,.8,.25,1) .9s forwards;
-  }
-  .popper-l { left:  clamp(6px, 4vw, 72px); }
-  .popper-r { right: clamp(6px, 4vw, 72px); }
-  .popper-r use { transform: scaleX(-1); transform-origin: 50% 50%; }
-  @keyframes pop {
-    0%   { opacity: 0; transform: scale(.72) rotate(-9deg); }
-    100% { opacity: 1; transform: none; }
-  }
-
   @keyframes sway {
     0%, 100% { transform: rotate(-2.2deg); }
     50%      { transform: rotate(2.2deg); }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    main, .popper { animation: none; opacity: 1; transform: none; }
+    main { animation: none; opacity: 1; transform: none; }
     .ribbons path { animation: none !important; stroke-dashoffset: 0 !important; }
+    .garden .b { animation: none; opacity: 1; transform: none; }
   }
 </style>
 </head>
 <body>
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="popper" viewBox="0 0 100 100">
-    <path d="M6 95 L41 54 Q51 58 55 71 Z" fill="currentColor" fill-opacity=".12"
-          stroke="currentColor" stroke-width="3.2" stroke-linejoin="round"/>
-    <path d="M21 80 L35 66" stroke="currentColor" stroke-width="2.4"
-          stroke-linecap="round" opacity=".4"/>
-    <path d="M53 47 Q61 29 55 15" fill="none" stroke="#B9852A"
-          stroke-width="3" stroke-linecap="round"/>
-    <path d="M65 59 Q80 53 93 59" fill="none" stroke="#3C7A62"
-          stroke-width="3" stroke-linecap="round"/>
-    <path d="M61 45 Q77 33 89 35" fill="none" stroke="#8A2F5B"
-          stroke-width="2.8" stroke-linecap="round" opacity=".65"/>
-    <rect x="69" y="19" width="7" height="9" rx="1.6" fill="#B9852A"
-          transform="rotate(24 72.5 23.5)"/>
-    <rect x="85" y="71" width="6" height="8" rx="1.6" fill="#7A2E52"
-          transform="rotate(-18 88 75)"/>
-    <circle cx="43" cy="21" r="3.2" fill="#3C7A62"/>
-    <circle cx="82" cy="45" r="2.5" fill="#C9AEA6"/>
-  </symbol>
-</svg>
-
-<svg class="popper popper-l" aria-hidden="true"><use href="#popper"/></svg>
-<svg class="popper popper-r" aria-hidden="true"><use href="#popper"/></svg>
+<svg class="garden" id="garden" aria-hidden="true"></svg>
 
 <svg class="ribbons" id="ribbons" aria-hidden="true" preserveAspectRatio="xMidYMin slice"></svg>
 <canvas id="confetti" aria-hidden="true"></canvas>
@@ -175,20 +149,20 @@
   function drawRibbons(animate) {
     var w = window.innerWidth,
         h = Math.min(window.innerHeight * .46, 380),
-        n = Math.max(5, Math.min(11, Math.round(w / 135)));
+        n = Math.max(3, Math.min(7, Math.round(w / 230)));
 
     svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
     while (svg.firstChild) svg.removeChild(svg.firstChild);
 
     for (var i = 0; i < n; i++) {
       var x   = (w / n) * (i + .5) + (Math.random() - .5) * (w / n) * .55,
-          len = h * (.42 + Math.random() * .5),
+          len = h * (.30 + Math.random() * .34),
           p   = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 
       p.setAttribute('d', ribbonPath(x, len));
       p.setAttribute('stroke', RIBBON[i % RIBBON.length]);
       p.setAttribute('stroke-width', (3 + Math.random() * 3).toFixed(1));
-      p.setAttribute('opacity', (.55 + Math.random() * .35).toFixed(2));
+      p.setAttribute('opacity', (.42 + Math.random() * .28).toFixed(2));
       svg.appendChild(p);
 
       if (animate && !REDUCED) {
@@ -211,6 +185,159 @@
   }
 
   drawRibbons(true);
+
+  /* ---------- cveće ---------- */
+  var BLOOM = ['#7A2E52', '#8A2F5B', '#A8506F', '#C2738D', '#C9AEA6', '#E6D9D4'];
+  var LEAFC = ['#3C7A62', '#4E8A70', '#65997F', '#2F6350'];
+  var BERRY = ['#611F41', '#8A2F5B', '#B9852A'];
+  var GOLD  = '#B9852A';
+  function pick(a) { return a[(Math.random() * a.length) | 0]; }
+
+  function fBloom(col, r) {
+    var g = '', n = 5, i;
+    for (i = 0; i < n; i++) {
+      g += '<path d="M0 0 C ' + (-r * .30) + ' ' + (-r * .36) + ' ' + (-r * .26) + ' ' + (-r * .82) +
+           ' 0 ' + (-r) + ' C ' + (r * .26) + ' ' + (-r * .82) + ' ' + (r * .30) + ' ' + (-r * .36) +
+           ' 0 0 Z" fill="' + col + '" transform="rotate(' + (i * 360 / n) + ')"/>';
+    }
+    return g + '<circle r="' + (r * .17).toFixed(1) + '" fill="' + GOLD + '"/>';
+  }
+
+  function fLeaf(col, L) {
+    return '<path d="M0 0 C ' + (L * .30) + ' ' + (-L * .26) + ' ' + (L * .30) + ' ' + (-L * .72) +
+           ' 0 ' + (-L) + ' C ' + (-L * .30) + ' ' + (-L * .72) + ' ' + (-L * .30) + ' ' + (-L * .26) +
+           ' 0 0 Z" fill="' + col + '"/>' +
+           '<path d="M0 0 L 0 ' + (-L * .9) + '" stroke="rgba(255,255,255,.3)" fill="none" stroke-width="' +
+           (L * .05).toFixed(2) + '"/>';
+  }
+
+  function fSprig(col, L) {
+    var g = '<path d="M0 0 Q ' + (L * .1) + ' ' + (-L * .5) + ' 0 ' + (-L) + '" stroke="' + col +
+            '" stroke-width="' + (L * .035).toFixed(2) + '" fill="none" stroke-linecap="round"/>',
+        n = 5 + ((Math.random() * 3) | 0), i;
+    for (i = 1; i <= n; i++) {
+      var t = i / (n + 1), y = -L * t, sz = L * .26 * (1 - t * .45);
+      g += '<g transform="translate(0 ' + y.toFixed(1) + ')">' +
+           '<path d="M0 0 C ' + (sz * .5) + ' ' + (-sz * .3) + ' ' + sz + ' ' + (-sz * .2) + ' ' + (sz * 1.1) +
+           ' ' + (sz * .18) + ' C ' + (sz * .6) + ' ' + (sz * .3) + ' ' + (sz * .2) + ' ' + (sz * .2) +
+           ' 0 0 Z" fill="' + col + '"/>' +
+           '<path d="M0 0 C ' + (-sz * .5) + ' ' + (-sz * .3) + ' ' + (-sz) + ' ' + (-sz * .2) + ' ' + (-sz * 1.1) +
+           ' ' + (sz * .18) + ' C ' + (-sz * .6) + ' ' + (sz * .3) + ' ' + (-sz * .2) + ' ' + (sz * .2) +
+           ' 0 0 Z" fill="' + col + '"/></g>';
+    }
+    return g;
+  }
+
+  function fBerry(col, L) {
+    var g = '<path d="M0 0 Q ' + (L * .12) + ' ' + (-L * .4) + ' 0 ' + (-L * .72) + '" stroke="#4E8A70" fill="none" stroke-width="' +
+            (L * .05).toFixed(2) + '" stroke-linecap="round"/>',
+        n = 2 + ((Math.random() * 3) | 0), i;
+    for (i = 0; i < n; i++) {
+      g += '<ellipse cx="' + ((Math.random() - .5) * L * .5).toFixed(1) + '" cy="' +
+           (-L * (.45 + Math.random() * .5)).toFixed(1) + '" rx="' + (L * .12).toFixed(1) +
+           '" ry="' + (L * .15).toFixed(1) + '" fill="' + col + '"/>';
+    }
+    return g;
+  }
+
+  function fBud(col, L) {
+    return '<path d="M0 0 L 0 ' + (-L * .55) + '" stroke="#4E8A70" fill="none" stroke-width="' +
+           (L * .055).toFixed(2) + '" stroke-linecap="round"/>' +
+           '<path d="M0 ' + (-L * .5) + ' C ' + (L * .2) + ' ' + (-L * .62) + ' ' + (L * .18) + ' ' + (-L * .95) +
+           ' 0 ' + (-L) + ' C ' + (-L * .18) + ' ' + (-L * .95) + ' ' + (-L * .2) + ' ' + (-L * .62) +
+           ' 0 ' + (-L * .5) + ' Z" fill="' + col + '"/>';
+  }
+
+  var garden = document.getElementById('garden');
+
+  function drawGarden() {
+    var w = window.innerWidth, h = window.innerHeight;
+    garden.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+
+    /* stvarni raspon slova, ne širina bloka — Range hvata prelomljene redove */
+    function textBox(sel) {
+      var r = document.createRange();
+      r.selectNodeContents(document.querySelector(sel));
+      return r.getBoundingClientRect();
+    }
+    var t1 = textBox('h1'), t2 = textBox('main p'),
+        m = {
+          left:   Math.min(t1.left,   t2.left),
+          right:  Math.max(t1.right,  t2.right),
+          top:    Math.min(t1.top,    t2.top),
+          bottom: Math.max(t1.bottom, t2.bottom)
+        },
+        px = Math.max(26, w * .045), py = Math.max(24, h * .035),
+        sl = m.left - px, sr = m.right + px, st = m.top - py, sb = m.bottom + py,
+        cx = w / 2, cy = h / 2,
+        band = Math.min(w, h) * .22,
+        out = [];
+
+    /* sidra duž oboda, gurnuta malo ka unutra — gušće u uglovima */
+    var per = 2 * (w + h),
+        nAnchors = Math.round(Math.min(42, Math.max(18, per / 155)));
+
+    function anchor(t, deep) {
+      var x, y;
+      if (t < w)             { x = t;              y = 0; }
+      else if (t < w + h)    { x = w;              y = t - w; }
+      else if (t < 2*w + h)  { x = w - (t - w - h); y = h; }
+      else                   { x = 0;              y = h - (t - 2*w - h); }
+      var dx = cx - x, dy = cy - y, d = Math.sqrt(dx*dx + dy*dy) || 1;
+      var depth = Math.pow(Math.random(), 1.6) * band * (deep ? 1 : .55);
+      return { x: x + dx / d * depth, y: y + dy / d * depth };
+    }
+
+    function emit(x, y, R, el) {
+      if (x + R > sl && x - R < sr && y + R > st && y - R < sb) return;
+      if (x < -R || x > w + R || y < -R || y > h + R) return;
+      out.push('<g transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' +
+               ((Math.random() * 360) | 0) + ') scale(' + (.9 + Math.random() * .38).toFixed(2) + ')">' +
+               '<g class="b" style="animation-delay:' + (Math.random() * .6).toFixed(2) + 's">' +
+               el + '</g></g>');
+    }
+
+    for (var i = 0; i < nAnchors; i++) {
+      var a = anchor((i / nAnchors + Math.random() * .6 / nAnchors) * per, true),
+          spread = 34 + Math.random() * 46,
+          n = 4 + ((Math.random() * 4) | 0);
+
+      /* nosilac grozda — krupan cvet */
+      var Rm = 21 + Math.random() * 15;
+      emit(a.x, a.y, Rm, fBloom(pick(BLOOM), Rm));
+
+      for (var k = 0; k < n; k++) {
+        var ang = Math.random() * Math.PI * 2,
+            rad = spread * (.35 + Math.random() * .85),
+            x = a.x + Math.cos(ang) * rad,
+            y = a.y + Math.sin(ang) * rad,
+            r = Math.random(), R, el;
+
+        if      (r < .20) { R = 10 + Math.random() * 10; el = fBloom(pick(BLOOM), R); }
+        else if (r < .46) { R = 24 + Math.random() * 22; el = fLeaf(pick(LEAFC), R); }
+        else if (r < .74) { R = 34 + Math.random() * 30; el = fSprig(pick(LEAFC), R); }
+        else if (r < .89) { R = 24 + Math.random() * 18; el = fBerry(pick(BERRY), R); }
+        else              { R = 20 + Math.random() * 15; el = fBud(pick(BLOOM), R); }
+        emit(x, y, R, el);
+      }
+    }
+
+    /* sitno punjenje po samoj ivici, da ram nema rupa */
+    var fill = Math.round(nAnchors * 2.2);
+    for (var j = 0; j < fill; j++) {
+      var b = anchor(Math.random() * per, false),
+          r2 = Math.random(), R2, el2;
+      if      (r2 < .34) { R2 =  8 + Math.random() *  9; el2 = fBloom(pick(BLOOM), R2); }
+      else if (r2 < .70) { R2 = 18 + Math.random() * 16; el2 = fLeaf(pick(LEAFC), R2); }
+      else               { R2 = 26 + Math.random() * 20; el2 = fSprig(pick(LEAFC), R2); }
+      emit(b.x, b.y, R2, el2);
+    }
+
+    garden.innerHTML = out.join('');
+  }
+
+  drawGarden();
+
 
   /* ---------- konfete ---------- */
   var canvas = document.getElementById('confetti'),
@@ -321,7 +448,7 @@
   var rt;
   window.addEventListener('resize', function () {
     clearTimeout(rt);
-    rt = setTimeout(function () { resize(); drawRibbons(false); }, 180);
+    rt = setTimeout(function () { resize(); drawRibbons(false); drawGarden(); }, 180);
   });
 })();
 </script>
